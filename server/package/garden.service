@@ -1,0 +1,13 @@
+[Unit]
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=simple
+User=root
+RemainAfterExit=yes
+ExecStart=/bin/bash /home/hsalemwalla/garden/server/bin/start
+
+[Install]
+WantedBy=multi-user.target
+
