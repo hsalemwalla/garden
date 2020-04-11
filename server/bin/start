@@ -1,2 +1,2 @@
 
-./server.py
+./server.py $1
