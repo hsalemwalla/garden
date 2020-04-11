@@ -8,3 +8,8 @@ sudo systemctl enable mosquitto
 ```
 
 
+Arduino secrets file
+arduino/garden-client/arduino_secrets.h
+char ssid[] = "<ssid>"
+char pass[] = "<pass>";
+
