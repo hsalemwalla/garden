@@ -1,19 +1,24 @@
 #include <ArduinoMqttClient.h>
 #include <WiFiNINA.h>
 #include <avr/sleep.h>
+#include <OneWire.h> 
+#include <DallasTemperature.h>
+
 
 #include "arduino_secrets.h"
 
+#define VERSION "1.0.0"
+
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
-
+char MQTT_CLIENT_ID[] = "Gardener";
 const char broker[] = "192.168.1.65";
 const int port = 1883;
 
 // Values and functions for calibrating the various sensors
 
 // Soil moisture
-int PIN_SOIL_MOISTURE = A0;
+int PIN_SOIL_MOISTURE = A1;
 int SOIL_MOISTURE_MAX = 306.9; // 100% Moisture (1.50V)
 int SOIL_MOISTURE_MIN = 519; // 0% Moisture (2.54V)
 char TOPIC_SOIL_MOISTURE[] = "garden/soil/moisture";
@@ -25,14 +30,13 @@ int processSoilMoisture(int raw) {
 }
 
 // Air temperature
-int PIN_AIR_TEMP = A1;
-int AIR_TEMP_MAX = 1024 ;
-int AIR_TEMP_MIN = 0;
+int PIN_AIR_TEMP = 2; // Digital 2
 char TOPIC_AIR_TEMP[] = "garden/air/temperature";
-
+OneWire airTempWire(PIN_AIR_TEMP);
+DallasTemperature airTempSensor(&airTempWire);
 
 // Light
-int PIN_LIGHT = A2;
+int PIN_LIGHT = A0;
 int LIGHT_MAX = 491;
 int LIGHT_MIN = 8;
 char TOPIC_LIGHT[] = "garden/light";
@@ -55,16 +59,16 @@ void wifiSetup() {
     delay(5000);
   }
   Serial.println("Connected!");
-  Serial.println();
 }
 
 void sensorsSetup() {
   pinMode(PIN_SOIL_MOISTURE, INPUT);
-  pinMode(PIN_AIR_TEMP, INPUT);
   pinMode(PIN_LIGHT, INPUT);
+  airTempSensor.begin();
+
 }
 
-void mqttSetup() {
+void mqttConnect() {
   Serial.print("Attempting to connect to broker ");
   Serial.print(broker);
   Serial.print("...");
@@ -74,7 +78,6 @@ void mqttSetup() {
     while (1);
   }
   Serial.println("Connected!");
-  Serial.println();
 }
 
 void mqttSend(char topic[], int msg) {
@@ -86,22 +89,37 @@ void mqttSend(char topic[], int msg) {
 void setup() {
   Serial.begin(9600);
   while (!Serial) {}
+  Serial.print("Version: ");
+  Serial.println(VERSION);
 
+  pinMode(LED_BUILTIN,OUTPUT);
+  
   wifiSetup();
-  mqttSetup();
+  mqttClient.setId(MQTT_CLIENT_ID);
+  mqttConnect();
   sensorsSetup();
 
+  digitalWrite(LED_BUILTIN,HIGH);
+
   //lowPowerModeSetup();
+  Serial.println();
 }
 
+// vars for sensor readings
+int soilMoisture;
+int airTemp;
+int light;
+int debug = true;
+
 void loop() {
-  // Read sensor values
-  // Sleep for a while
-  int soilMoisture;
-  int airTemp;
-  int light; 
+
+  if (!mqttClient.connected()) {
+    // MQTT client is disconnected, connect
+    mqttConnect();
+  }
 
   // Soil moisture 
+  /********************************************************************/
   soilMoisture = processSoilMoisture(analogRead(PIN_SOIL_MOISTURE));
   Serial.print("Soil moisture: ");
   Serial.print(soilMoisture);
@@ -109,15 +127,30 @@ void loop() {
   mqttSend(TOPIC_SOIL_MOISTURE, soilMoisture);
 
   // Air temp
-  // TODO
-  
+  /********************************************************************/
+  airTempSensor.requestTemperatures(); // Send the command to get temperature readings 
+  airTemp = airTempSensor.getTempCByIndex(0);
+  Serial.print("Air temperature is: "); 
+  Serial.println(airTemp);  // Only one sensor
+  mqttSend(TOPIC_AIR_TEMP, airTemp);
+
   // Light
+  /********************************************************************/
   light = processLight(analogRead(PIN_LIGHT));
   Serial.print("Light: ");
   Serial.println(light);
   mqttSend(TOPIC_LIGHT, light);
 
-
-  delay(5000);
-
+  // Delay for 5 mins
+  for (int i = 0; i < 30; i++) {
+    // 30 second loops 10 times so we don't timeout on the broker
+    delay(10000);
+    Serial.println("Polling broker");
+    if (debug == true) {
+      long rssi = WiFi.RSSI();
+      mqttSend("garden/debug/rssi", (int)rssi);
+    }
+    mqttClient.poll();
+  }
+  Serial.println();
 }

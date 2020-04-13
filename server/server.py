@@ -8,21 +8,25 @@ BROKER_ADDRESS="localhost"
 CLIENT_NAME = "Garden server"
 debug = False
 
+light_enabled = True
+air_temp_enabled = True
+soil_moisture_enabled = True
 
 # Util {{{
 #############################################################
 def log(msg):
    if debug:
       print(msg)
+
+def write_msg_to_file(line, filename):
+   if not debug: 
+      with open(filename, "a") as f:
+         f.write(line)
+
 ############################################################# }}}
 
 # Topic Handlers {{{
 #############################################################
-
-def write_msg_to_file(line, filename):
-   if not debug: 
-      with open(filename, "w+") as f:
-         f.write(line)
 
 def get_current_date_string():
    return time.strftime("%d/%m/%Y", time.localtime())
@@ -55,7 +59,8 @@ def handle_soil_moisture(message):
    time = get_current_time_string()
    msg = message.payload.decode("utf-8")
    line = date + "," + time + "," + msg + "\n"
-   write_msg_to_file(line, filename)
+   if soil_moisture_enabled:
+      write_msg_to_file(line, filename)
 
 ############################################################# }}}
 
@@ -111,12 +116,19 @@ def main():
    #   client.loop(timeout)
    log("Beginning mqtt loop")
    while(True):
-      client.loop(0.1)
+      try:
+         client.loop(0.1)
+      except:
+         print("Stopping server");
+         break;
 
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Garden server')
    parser.add_argument('--debug', action='store_true', help='Turn debug mode on')
+   parser.add_argument('--no-soil-moisture', action='store_true', help='Soil moisture sensor is disabled')
+   parser.add_argument('--no-light', action='store_true', help='Light sensor is disabled')
+   parser.add_argument('--no-air-temp', action='store_true', help='Air temp sensor is disabled')
    args = parser.parse_args()
    if args.debug:
       print("---------------------------------------------------")
@@ -124,5 +136,16 @@ if __name__ == "__main__":
       print("Print statements enabled, writing to files disabled")
       print("---------------------------------------------------")
    debug = args.debug
+
+   # If flags set, disable sensor
+   soil_moisture_enabled = not args.no_soil_moisture
+   light_enabled = not args.no_light
+   air_temp_enabled = not args.no_air_temp
+
+   print("Sensors enabled:")
+   print("Soil moisture:",soil_moisture_enabled)
+   print("Light:",light_enabled)
+   print("Air temperature:",air_temp_enabled)
+   print()
 
    main()
