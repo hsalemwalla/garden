@@ -1,3 +1,4 @@
 #!/bin/bash
 cd /home/pi/development/garden/server
-./server.py $1
+./server.py $1 &
+./web/webserver.py $1 &

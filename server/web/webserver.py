@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 from flask import Flask, Response
-from flask_cors import CORS
 from flask import render_template
 import flask
+import os
 
-app = Flask(__name__)
+app = Flask("Garden")
+app.root_path = os.path.dirname(os.path.abspath(__file__))
+
 
 light_filename = "light.csv"
 air_temp_filename = "air_temp.csv"
 
 def get_current_value(filename):
    # Get last line of each value
-   with open("../" + filename, 'r') as f:
+   with open("/home/pi/development/garden/server/" + filename, 'r') as f:
       for line in f:
          pass
       value = line.split(',')[-1]
       return value
 
-@app.route('/garden')
+@app.route('/')
 def garden():
+   ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+   print(ROOT_DIR)
    air_temp = None
    light = None
 
@@ -30,4 +34,4 @@ def garden():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=False)
