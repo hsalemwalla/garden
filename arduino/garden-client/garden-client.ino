@@ -12,7 +12,7 @@
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 char MQTT_CLIENT_ID[] = "Gardener";
-const char broker[] = "192.168.1.65";
+const char broker[] = "192.168.1.69";
 const int port = 1883;
 
 // Values and functions for calibrating the various sensors
@@ -111,12 +111,28 @@ int airTemp;
 int light;
 int debug = true;
 
-void loop() {
+void testWiFiConnection() {
+  int StatusWiFi=WiFi.status();
+  if(StatusWiFi==WL_CONNECTION_LOST || StatusWiFi==WL_DISCONNECTED || StatusWiFi==WL_SCAN_COMPLETED) //if no connection
+  {
+    mqttSend("garden/debug/log", "Wifi connection lost, reconnecting");
+    digitalWrite(LED_BUILTIN, LOW); //LED OFF to show disconnected
+    wifiSetup(); 
+  }
+}
 
+void testMqttConnection() {
   if (!mqttClient.connected()) {
+    mqttSend("garden/debug/log", "Mqtt connection lost, reconnecting");
     // MQTT client is disconnected, connect
     mqttConnect();
   }
+}
+void loop() {
+  //test connection, and reconnect if necessary
+  testWiFiConnection();
+  testMqttConnection();
+  
 
   // Soil moisture 
   /********************************************************************/

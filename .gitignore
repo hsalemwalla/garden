@@ -1,3 +1,4 @@
 env/
 **/*.csv
 **/arduino_secrets.h
+**/.DS_Store
