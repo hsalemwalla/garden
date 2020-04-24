@@ -3,6 +3,10 @@
 echo "Installing systemd file"
 sudo cp garden.service /lib/systemd/system/
 
+echo "Installing apache config"
+sudo cp garden.conf /etc/apache2/sites-available
+
 sudo systemctl daemon-reload
 echo "\"sudo systemctl start garden\" to start the server" 
 echo "\"sudo systemctl enable garden\" to start on boot"
+echo "\"sudo systemctl reload apache2\" to reload apache2 config"
