@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Gardener</title>
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+</head>
+<body>
+   <div class="title">
+      <h1>Gardener</h1>
+   </div>
+   <hr> 
+   <br> 
+
+   <div>
+      <b>Outside air temp: </b>
+   </div> 
+   
+   <div class="value">
+      {{ air_temp }} &#8451
+   </div> 
+
+   <div>
+      <b>Sunlight: </b>
+   </div>
+
+   <div class="value">
+      {{ light }} units
+   </div>
+   
+</body>
+</html>
