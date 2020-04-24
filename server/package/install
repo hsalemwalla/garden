@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "Installing systemd file"
+sudo cp garden.service /lib/systemd/system/
+
+sudo systemctl daemon-reload
+echo "\"sudo systemctl start garden\" to start the server" 
+echo "\"sudo systemctl enable garden\" to start on boot"
