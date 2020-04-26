@@ -23,16 +23,16 @@ def write_msg_to_file(line, filename):
       with open(filename, "a") as f:
          f.write(line)
 
+def get_current_date_string():
+   return time.strftime("%m/%d/%Y", time.localtime())
+
+def get_current_time_string():
+   return time.strftime("%H:%M:%S", time.localtime())
+
 ############################################################# }}}
 
 # Topic Handlers {{{
 #############################################################
-
-def get_current_date_string():
-   return time.strftime("%d/%m/%Y", time.localtime())
-
-def get_current_time_string():
-   return time.strftime("%H:%M:%S", time.localtime())
 
 def handle_light(message):
    log("handle_light")
@@ -61,6 +61,15 @@ def handle_soil_moisture(message):
    line = date + "," + time + "," + msg + "\n"
    if soil_moisture_enabled:
       write_msg_to_file(line, filename)
+
+def handle_debug(message):
+   log("handle_debug")
+   filename = "debug.csv"
+   date = get_current_date_string()
+   time = get_current_time_string()
+   msg = message.payload.decode("utf-8")
+   line = date + "," + time + "," + msg + "\n"
+   write_msg_to_file(line, filename)
 
 ############################################################# }}}
 
@@ -93,7 +102,8 @@ def on_message(client, userdata, message):
 
 TOPICS = {'garden/soil/moisture': handle_soil_moisture,
           'garden/air/temperature': handle_air_temp,
-          'garden/light': handle_light }
+          'garden/light': handle_light, 
+          'garden/debug/#': handle_debug }
 
 def main():
    log("Client name: " + CLIENT_NAME)
