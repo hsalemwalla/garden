@@ -20,7 +20,7 @@ light_enabled = True
 air_temp_enabled = True
 soil_moisture_enabled = True
 
-last_message_time = math.inf
+last_message_time = -math.inf
 
 # Util {{{
 #############################################################
