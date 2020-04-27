@@ -11,6 +11,12 @@ app.root_path = os.path.dirname(os.path.abspath(__file__))
 light_filename = "light.csv"
 air_temp_filename = "air_temp.csv"
 
+def get_status():
+   with open("/home/pi/development/garden/server/status", 'r') as f:
+      status = f.readline()
+   return status
+
+
 def get_current_value(filename):
    # Get last line of each value
    with open("/home/pi/development/garden/server/" + filename, 'r') as f:
@@ -23,13 +29,12 @@ def get_current_value(filename):
 def garden():
    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
    print(ROOT_DIR)
-   air_temp = None
-   light = None
 
+   status = get_status()
    light = get_current_value(light_filename)
    air_temp = get_current_value(air_temp_filename)
 
-   return render_template('garden.html', air_temp=air_temp, light=light)
+   return render_template('garden.html', air_temp=air_temp, light=light, status=status)
 
 
 
