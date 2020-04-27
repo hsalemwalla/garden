@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 
 STATUS_OK="OK"
 STATUS_NO_COMM_FROM_ARDUINO="NO_COMM"
+STATUS_SERVER_ERROR="SERVER_ERROR"
 status = None
 
 remote = False
@@ -163,10 +164,11 @@ def main():
          # If the last message was recvd more than 10 mins ago
          if last_message_time is not None:
             if current_time > last_message_time + (60*10):
-               set_status(NO_COMM_FROM_ARDUINO)
+               set_status(STATUS_NO_COMM_FROM_ARDUINO)
          client.loop(0.1)
-      except:
-         print("Stopping server");
+      except e:
+         print("Error occured");
+         set_status(STATUS_SERVER_ERROR)
          break;
 
 
