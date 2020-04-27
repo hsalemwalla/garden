@@ -3,3 +3,4 @@ env/
 **/arduino_secrets.h
 **/.DS_Store
 **/__pycache__
+**/status
