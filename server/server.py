@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 
-import paho.mqtt.client as mqtt 
 import time
 import argparse
+import math
 
+import paho.mqtt.client as mqtt 
+
+STATUS_OK="OK"
+STATUS_NO_COMM_FROM_ARDUINO="NO_COMM"
+status = None
+
+remote = False
 BROKER_ADDRESS="localhost"
+
 CLIENT_NAME = "Garden server"
 debug = False
 
 light_enabled = True
 air_temp_enabled = True
 soil_moisture_enabled = True
+
+last_message_time = math.inf
 
 # Util {{{
 #############################################################
@@ -23,11 +33,27 @@ def write_msg_to_file(line, filename):
       with open(filename, "a") as f:
          f.write(line)
 
+def get_time_string(t):
+   return time.strftime("%m/%d/%Y %H:%M:%S", t)
+
 def get_current_date_string():
    return time.strftime("%m/%d/%Y", time.localtime())
 
 def get_current_time_string():
    return time.strftime("%H:%M:%S", time.localtime())
+
+def update_status_file(sts):
+   with open("status", "w+") as f:
+      f.write(sts)
+
+def set_status(sts):
+   global status
+   if status == sts:
+      pass
+   else:
+      status = sts
+      log("Changing status to: " + sts)
+      update_status_file(sts)
 
 ############################################################# }}}
 
@@ -87,7 +113,12 @@ def on_disconnect(client, userdata, flags, rc):
    client.loop_stop()
 
 def on_message(client, userdata, message):
-   log("message recvd: " + message.topic + ": " + str(message.payload.decode("utf-8")))
+   global last_message_time
+   last_message_time = time.time()
+   log(get_time_string(last_message_time) + ": " + message.topic + ": " + str(message.payload.decode("utf-8")))
+   # We have received something from the arduino, so all is good
+   set_status(STATUS_OK)
+
    handler = None
    for topic in TOPICS: 
       if topic == message.topic:
@@ -116,6 +147,7 @@ def main():
    client.on_disconnect=on_disconnect 
 
    client.connect(BROKER_ADDRESS)
+   set_status(STATUS_OK)
 
    # We can either loop forever blocking:
    #   client.loop_forever()
@@ -127,6 +159,11 @@ def main():
    log("Beginning mqtt loop")
    while(True):
       try:
+         current_time = time.time()
+         # If the last message was recvd more than 10 mins ago
+         if last_message_time is not None:
+            if current_time > last_message_time + (60*10):
+               set_status(NO_COMM_FROM_ARDUINO)
          client.loop(0.1)
       except:
          print("Stopping server");
@@ -136,6 +173,7 @@ def main():
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Garden server')
    parser.add_argument('--debug', action='store_true', help='Turn debug mode on')
+   parser.add_argument('--remote', action='store_true', help='MQTT Broker is on remote device')
    parser.add_argument('--no-soil-moisture', action='store_true', help='Soil moisture sensor is disabled')
    parser.add_argument('--no-light', action='store_true', help='Light sensor is disabled')
    parser.add_argument('--no-air-temp', action='store_true', help='Air temp sensor is disabled')
@@ -146,6 +184,9 @@ if __name__ == "__main__":
       print("Print statements enabled, writing to files disabled")
       print("---------------------------------------------------")
    debug = args.debug
+   remote = args.remote
+   if remote:
+      BROKER_ADDRESS = "server.local"
 
    # If flags set, disable sensor
    soil_moisture_enabled = not args.no_soil_moisture
