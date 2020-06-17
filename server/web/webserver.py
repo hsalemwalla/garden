@@ -12,14 +12,14 @@ light_filename = "light.csv"
 air_temp_filename = "air_temp.csv"
 
 def get_status():
-   with open("/home/pi/development/garden/server/status", 'r') as f:
+   with open("/home/pi/dev/garden/server/status", 'r') as f:
       status = f.readline()
    return status
 
 
 def get_current_value(filename):
    # Get last line of each value
-   with open("/home/pi/development/garden/server/" + filename, 'r') as f:
+   with open("/home/pi/dev/garden/server/" + filename, 'r') as f:
       for line in f:
          pass
       value = line.split(',')[-1]

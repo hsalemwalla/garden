@@ -6,7 +6,7 @@ Requires=network-online.target
 Type=simple
 User=root
 RemainAfterExit=yes
-ExecStart=/bin/bash /home/pi/development/garden/server/bin/start
+ExecStart=/bin/bash /home/pi/dev/garden/server/bin/start
 
 [Install]
 WantedBy=multi-user.target
